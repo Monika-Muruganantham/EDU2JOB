@@ -12,9 +12,7 @@ import type {
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 class ApiClient {
-  // ===============================
-  // TOKEN HANDLING
-  // ===============================
+ 
   private getToken(): string | null {
     return localStorage.getItem('access');
   }
@@ -29,9 +27,7 @@ class ApiClient {
     localStorage.removeItem('admin_access');
   }
 
-  // ===============================
-  // CORE REQUEST METHOD
-  // ===============================
+ 
   private async request<T>(
     endpoint: string,
     options: RequestInit = {},
@@ -65,9 +61,7 @@ class ApiClient {
     return response.json() as Promise<T>;
   }
 
-  // ===============================
-  // AUTH
-  // ===============================
+ 
   async login(data: LoginCredentials): Promise<AuthResponse> {
     const res = await this.request<AuthResponse>('/api/auth/login/', {
       method: 'POST',
@@ -79,19 +73,20 @@ class ApiClient {
     return res;
   }
 
-  async googleLogin(credential: string) {
-    const res = await this.request<{ access: string; refresh: string }>(
-      '/api/auth/google/',
-      {
-        method: 'POST',
-        body: JSON.stringify({ credential }),
-      }
-    );
+  async googleLogin(token: string) {
+  const res = await this.request<{ access: string; refresh: string }>(
+    '/api/auth/google/',
+    {
+      method: 'POST',
+      body: JSON.stringify({ token }), 
+    }
+  );
 
-    this.setToken(res.access);
-    localStorage.setItem('refresh', res.refresh);
-    return res;
-  }
+  this.setToken(res.access);
+  localStorage.setItem('refresh', res.refresh);
+  return res;
+}
+
 
   async register(data: RegisterData): Promise<AuthResponse> {
     const res = await this.request<AuthResponse>('/api/auth/register/', {
@@ -112,9 +107,7 @@ class ApiClient {
     return this.request<User>('/api/auth/me/');
   }
 
-  // ===============================
-  // PROFILE
-  // ===============================
+ 
   async updateProfile(profile: Partial<UserProfile>): Promise<UserProfile> {
     const payload = {
       ...profile,
@@ -129,9 +122,7 @@ class ApiClient {
     });
   }
 
-  // ===============================
-  // JOB PREDICTION
-  // ===============================
+  
   async predictJob(education: UserProfile): Promise<JobPrediction> {
     return this.request<JobPrediction>('/api/auth/predict/', {
       method: 'POST',
@@ -143,9 +134,7 @@ class ApiClient {
     return this.request<PredictionHistory[]>('/api/auth/predictions/');
   }
 
-  // ===============================
-  // CERTIFICATIONS
-  // ===============================
+
   async addCertificationWithPDF(formData: FormData): Promise<{ message: string }> {
     return this.request<{ message: string }>(
       '/api/auth/add-certification/',
@@ -160,9 +149,7 @@ class ApiClient {
     return this.request<Certification[]>('/api/auth/certifications/');
   }
 
-  // ===============================
-  // FEEDBACK
-  // ===============================
+
   async submitFeedback(feedback: {
     role: string;
     rating: number;
@@ -173,10 +160,18 @@ class ApiClient {
       body: JSON.stringify(feedback),
     });
   }
+  async flagPrediction(predictionId: number, reason: string) {
+  return this.request(
+    `/api/auth/predictions/${predictionId}/flag/`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }
+  );
+}
 
-  // ===============================
-  // ADMIN AUTH
-  // ===============================
+
+ 
   async adminRegister(data: {
     username: string;
     email: string;
@@ -215,17 +210,12 @@ class ApiClient {
     return res;
   }
 
-  // ===============================
-  // ADMIN DASHBOARD (IMPORTANT)
-  // ===============================
-  // ===============================
-// ADMIN DASHBOARD
-// ===============================
-async getAdminStats(): Promise<{
-  total_users: number;
-  total_predictions: number;
-  flagged_count: number;
-  feedback_count: number;
+  
+  async getAdminStats(): Promise<{
+    total_users: number;
+    total_predictions: number;
+    flagged_count: number;
+    feedback_count: number;
 }> {
   return this.request<{
     total_users: number;
@@ -237,14 +227,12 @@ async getAdminStats(): Promise<{
     {
       method: 'GET',
     },
-    true // 🔥 VERY IMPORTANT → admin token
+    true 
   );
 }
 
 
-  // ===============================
-  // ADMIN LOGS
-  // ===============================
+ 
   async getUserLogs(): Promise<any[]> {
     return this.request<any[]>(
       '/api/admin-api/logs/',
@@ -253,9 +241,7 @@ async getAdminStats(): Promise<{
     );
   }
 
-  // ===============================
-  // ADMIN FLAGGED
-  // ===============================
+  
   async getFlaggedPredictions(): Promise<any[]> {
     return this.request<any[]>(
       '/api/admin-api/flagged/',
@@ -274,9 +260,7 @@ async getAdminStats(): Promise<{
     );
   }
 
-  // ===============================
-  // ADMIN RETRAIN
-  // ===============================
+  
   async uploadTrainingData(file: File): Promise<{ message: string }> {
     const formData = new FormData();
     formData.append('file', file);

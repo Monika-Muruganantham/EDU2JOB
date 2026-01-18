@@ -43,7 +43,7 @@ export function LoginPage() {
         <GoogleLogin
           onSuccess={handleGoogleSuccess}
           onError={() => console.error('Google login failed')}
-          useOneTap
+          
         />
       </div>
     </div>

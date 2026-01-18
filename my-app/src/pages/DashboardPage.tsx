@@ -25,39 +25,38 @@ type UIHistoryItem = {
 export default function DashboardPage() {
   const navigate = useNavigate();
 
-  // ----------------- FORM STATE -----------------
+  
   const [degree, setDegree] = useState("");
   const [specialization, setSpecialization] = useState("");
   const [university, setUniversity] = useState("");
   const [graduationYear, setGraduationYear] = useState("");
   const [cgpa, setCgpa] = useState("");
 
-  // ----------------- PREDICTION STATE -----------------
+  
   const [predictions, setPredictions] = useState<UIPrediction[]>([]);
   const [history, setHistory] = useState<UIHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ----------------- FEEDBACK STATE -----------------
+  
   const [feedbackRole, setFeedbackRole] = useState(""); 
   const [feedbackRating, setFeedbackRating] = useState(5); 
   const [feedbackComment, setFeedbackComment] = useState(""); 
   const [feedbackSuccess, setFeedbackSuccess] = useState(""); 
   const [feedbackError, setFeedbackError] = useState(""); 
 
-  // ----------------- LOGOUT -----------------
   const handleLogout = () => {
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
     navigate("/login");
   };
 
-  // ----------------- EDIT PROFILE -----------------
+  
   const handleEditProfile = () => {
     navigate("/profile");
   };
 
-  // ----------------- LOAD HISTORY -----------------
+  
   const loadHistory = async () => {
     try {
       const res = await api.getPredictionHistory();

@@ -1,6 +1,4 @@
-// =====================
-// USER TYPES
-// =====================
+
 
 export interface User {
   id?: string;
@@ -8,7 +6,7 @@ export interface User {
   name?: string;
   picture?: string;
 
-  // IMPORTANT: used for route protection
+  
   role?: "user" | "admin";
 
   profile?: UserProfile;
@@ -23,7 +21,7 @@ export interface UserProfile {
   skills: string[];
 }
 
-// Used only for job prediction API payload
+
 export interface PredictionPayload {
   degree: string;
   specialization: string;
@@ -33,9 +31,6 @@ export interface PredictionPayload {
   skills: string[];
 }
 
-// =====================
-// AUTH TYPES
-// =====================
 
 export interface LoginCredentials {
   email: string;
@@ -47,7 +42,7 @@ export interface RegisterData {
   password: string;
   name: string;
 
-  // Optional admin support
+  
   is_admin?: boolean;
   admin_code?: string;
 }
@@ -57,9 +52,6 @@ export interface AuthResponse {
   refresh: string;
 }
 
-// =====================
-// JOB PREDICTION TYPES
-// =====================
 
 export interface JobRolePrediction {
   job: string;
@@ -71,7 +63,6 @@ export interface JobPrediction {
   primary: JobRolePrediction;
   alternatives: JobRolePrediction[];
 
-  // Optional helper
   top_roles?: any;
 }
 
@@ -83,9 +74,7 @@ export interface PredictionHistory {
   createdAt: string;
 }
 
-// =====================
-// CERTIFICATION TYPES
-// =====================
+
 
 export interface Certification {
   id: string;
@@ -101,35 +90,27 @@ export interface CertificationCreate {
   year: number;
 }
 
-// =====================
-// FEEDBACK TYPES
-// =====================
+
 
 export interface Feedback {
   predictionId: number;
   rating: number;
   comment?: string;
-  role: string;
+  role?: string;
+  
 }
 
-// =====================
-// ADMIN TYPES
-// =====================
-
-// Admin login response
 export interface AdminLoginResponse {
   access: string;
   refresh?: string;
   is_admin: boolean;
 }
 
-// Admin user object (optional use)
 export interface AdminUser {
   email: string;
   role: "admin";
 }
 
-// User logs for admin dashboard
 export interface UserLog {
   id: number | string;
   user_email: string;
@@ -139,7 +120,6 @@ export interface UserLog {
   createdAt: string;
 }
 
-// Flagged / incorrect predictions
 export interface FlaggedPrediction {
   id: number | string;
   user_email: string;
