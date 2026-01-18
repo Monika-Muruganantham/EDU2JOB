@@ -136,6 +136,12 @@ class Certification(models.Model):
 
     def __str__(self):
         return self.certification_name
+class Feedback(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    role = models.CharField(max_length=100)
+    rating = models.IntegerField()
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 # -------------------------------------------------
@@ -170,3 +176,23 @@ class FlaggedItem(models.Model):
 
     def __str__(self):
         return f"Flagged by {self.user.username}"
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
+
+class ModelRetrainView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get("file")
+
+        if not file:
+            return Response({"message": "No file uploaded"}, status=400)
+
+        # 👉 Here you would retrain ML model
+        # For now, we simulate training
+        print("Training file received:", file.name)
+
+        return Response({
+            "message": "Model retrained successfully"
+        })

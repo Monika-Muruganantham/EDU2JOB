@@ -13,7 +13,9 @@ from .views import (
     AddCertificationView,
     AdminLoginView,
     AdminDashboardView,
+    RetrainModelView,
     UserLogsView,
+    FeedbackView,
 )
 
 urlpatterns = [
@@ -28,10 +30,15 @@ urlpatterns = [
     path("auth/predict/", PredictView.as_view(), name="predict"),
     path("auth/predictions/", PredictionHistoryView.as_view(), name="prediction_history"),
     path("auth/add-certification/", AddCertificationView.as_view(), name="add_certification"),
+    path("auth/feedback/", FeedbackView.as_view(), name="feedback"),
+
+
 
     # ===== ADMIN API =====
     path("admin-api/login/", AdminLoginView.as_view(), name="admin_login"),
     path("admin-api/dashboard/", AdminDashboardView.as_view()),
     path("admin-api/logs/", UserLogsView.as_view()),
     path("admin-api/flagged/", FlaggedItemsView.as_view()),
+    path("admin-api/retrain/", RetrainModelView.as_view()),
+
 ]

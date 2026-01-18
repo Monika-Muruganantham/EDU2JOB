@@ -38,9 +38,7 @@ from .utils import preprocess
 
 User = get_user_model()
 
-# =========================
-# REGISTER
-# =========================
+
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
@@ -58,9 +56,6 @@ class RegisterView(APIView):
         )
 
 
-# =========================
-# LOGIN
-# =========================
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -87,19 +82,19 @@ class LoginView(APIView):
         )
 
 
-# =========================
-# GOOGLE LOGIN
-# =========================
-# views.py
+from django.conf import settings
 from google.oauth2 import id_token
-from google.auth.transport import requests
+from google.auth.transport import requests as google_requests
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from django.contrib.auth.models import User
+from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 
-GOOGLE_CLIENT_ID = "876042599156-56lm39mktcqufeo37dq6v1m4glvhsl3a.apps.googleusercontent.com"
+from django.contrib.auth import get_user_model
+from .models import Profile
+
+User = get_user_model()
 
 class GoogleLoginView(APIView):
     permission_classes = [AllowAny]
@@ -108,42 +103,64 @@ class GoogleLoginView(APIView):
         token = request.data.get("token")
 
         if not token:
-            return Response({"error": "Token missing"}, status=400)
+            return Response(
+                {"error": "Token missing"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             idinfo = id_token.verify_oauth2_token(
                 token,
-                requests.Request(),
-                GOOGLE_CLIENT_ID
+                google_requests.Request(),
+                settings.GOOGLE_CLIENT_ID,
+                clock_skew_in_seconds=10  
             )
 
-            email = idinfo["email"]
+            email = idinfo.get("email")
             name = idinfo.get("name", "")
 
-            user, created = User.objects.get_or_create(
-                username=email,
-                defaults={"email": email, "first_name": name}
-            )
+            if not email:
+                return Response(
+                    {"error": "Email not available"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            user = User.objects.filter(email=email).first()
+
+            if not user:
+                user = User.objects.create_user(
+                username=email.split("@")[0],
+                email=email,
+                first_name=name,
+                password=User.objects.make_random_password(),
+    )
+
+
+            
+            Profile.objects.get_or_create(user=user)
 
             refresh = RefreshToken.for_user(user)
 
-            return Response({
-                "access": str(refresh.access_token),
-                "refresh": str(refresh),
-                "user": {
-                    "email": user.email,
-                    "username": user.username
-                }
-            })
+            return Response(
+                {
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                    "user": {
+                        "id": user.id,
+                        "email": user.email,
+                        "username": user.username,
+                    },
+                },
+                status=status.HTTP_200_OK,
+            )
 
         except ValueError:
-            return Response({"error": "Invalid Google token"}, status=400)
+            return Response(
+                {"error": "Invalid Google token"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
-
-# =========================
-# ✅ ME VIEW (FIXES YOUR ERROR)
-# =========================
 class MeView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -156,9 +173,6 @@ class MeView(APIView):
         })
 
 
-# =========================
-# PROFILE
-# =========================
 class ProfileView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -175,9 +189,8 @@ class ProfileView(APIView):
         return Response(serializer.data)
 
 
-# =========================
-# CERTIFICATION
-# =========================
+
+
 class CertificateView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -203,9 +216,7 @@ class AddCertificationView(APIView):
         return Response({"message": "Certification added successfully"}, status=201)
 
 
-# =========================
-# PREDICTION
-# =========================
+
 class PredictView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -256,9 +267,7 @@ class PredictView(APIView):
             return Response({"error": "Prediction failed"}, status=500)
 
 
-# =========================
-# EDUCATION
-# =========================
+
 class SaveEducationView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -276,9 +285,7 @@ class SaveEducationView(APIView):
         return Response({"message": "Education saved"}, status=201)
 
 
-# =========================
-# PREDICTION HISTORY
-# =========================
+
 class PredictionHistoryView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -299,9 +306,29 @@ class PredictionHistoryView(APIView):
             })
 
         return Response(history)
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+
+from .models import Feedback
+from .serializers import FeedbackSerializer
+
+class FeedbackView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = FeedbackSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(
+                {"message": "Feedback submitted successfully"},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import User
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import (
@@ -314,10 +341,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import PredictionHistory, Certification
 
-
-# ===========================
-# ADMIN REGISTER (SUPERADMIN ONLY)
-# ===========================
 class AdminRegisterView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -358,9 +381,6 @@ class AdminRegisterView(APIView):
         )
 
 
-# ===========================
-# ADMIN LOGIN (JWT ONLY)
-# ===========================
 from django.contrib.auth import authenticate
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -395,7 +415,7 @@ class AdminLoginView(APIView):
         return Response({
             "access": str(refresh.access_token),
             "refresh": str(refresh),
-            "is_admin": True   # 🔥 THIS LINE FIXES EVERYTHING
+            "is_admin": True   
         }, status=status.HTTP_200_OK)
 
 
@@ -410,9 +430,6 @@ from .serializers import UserLogSerializer, FlaggedItemSerializer, UserSerialize
 
 User = get_user_model()
 
-# =====================================================
-# ADMIN DASHBOARD (COUNTS)
-# =====================================================
 from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -424,9 +441,7 @@ from api.serializers import UserLogSerializer, FlaggedItemSerializer, UserSerial
 
 User = get_user_model()
 
-# ===========================
-# ADMIN DASHBOARD
-# ===========================
+
 class AdminDashboardView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -444,9 +459,6 @@ class AdminDashboardView(APIView):
         )
 
 
-# ===========================
-# USER LOGS
-# ===========================
 class UserLogsView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -456,9 +468,7 @@ class UserLogsView(APIView):
         return Response(serializer.data)
 
 
-# ===========================
-# FLAGGED ITEMS
-# ===========================
+
 class FlaggedItemsView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -466,3 +476,41 @@ class FlaggedItemsView(APIView):
         items = FlaggedItem.objects.all().order_by("-created_at")
         serializer = FlaggedItemSerializer(items, many=True)
         return Response(serializer.data)
+class RetrainModelView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get("file")
+        if not file:
+            return Response({"error": "No file uploaded"}, status=400)
+
+        
+        return Response({"message": "Model retrained successfully"})
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from .models import PredictionHistory, FlaggedItem
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def flag_prediction(request, prediction_id):
+    """
+    User can flag a prediction with a reason.
+    """
+    try:
+        prediction = PredictionHistory.objects.get(id=prediction_id, user=request.user)
+    except PredictionHistory.DoesNotExist:
+        return Response({"error": "Prediction not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    reason = request.data.get("reason", "")
+    if not reason:
+        return Response({"error": "Reason is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    FlaggedItem.objects.create(
+        user=request.user,
+        prediction=prediction,
+        reason=reason
+    )
+
+    return Response({"message": "Prediction flagged successfully"}, status=201)

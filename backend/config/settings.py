@@ -143,10 +143,8 @@ SIMPLE_JWT = {
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
-# =======================
-# GOOGLE CLIENT ID (DEV)
-# =======================
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_ID = "876042599156-56lm39mktcqufeo37dq6v1m4glvhsl3a.apps.googleusercontent.com"
+
 
 # =======================
 # CSRF / SECURE POLICIES
